@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+  <meta charset="utf-8">
+  <script src="https://maps.googleapis.com/maps/api/js?key=">
+  </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.dev.js"></script>
+  <title>Simple Polylines</title>
+  <style>
+    #map {
+      height: 100%;
+    }
+
+    html,
+    body {
+      height: 80%;
+      margin: 0;
+      padding: 0;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="map" onclick="getCordinates()"></div>
+  <script>
+    let socket = io.connect();
+    var map;
+    var bounds = new google.maps.LatLngBounds();
+    var checkCordinates = [];
+
+
+    function initialize() {
+      map = new google.maps.Map(document.getElementById('map'), {
+        zoom: 3,
+        center: { lat: 0, lng: -180 },
+        mapTypeId: 'terrain'
+      });
+    }
+    function getCordinates() {
+      setInterval(function () {
+        console.log('getting locations');
+        socket.emit('getLocation');
+      }, 2000);
+    }
+    socket.on('sendLocation', (cord) => {
+      checkCordinates = [];
+      for (i = 0; i < cord.length; i++) {
+        bounds.extend(new google.maps.LatLng(cord[i].latitude, cord[i].longitude))
+        checkCordinates.push({ lat: Number(cord[i].latitude), lng: Number(cord[i].longitude) });
+      }
+      var routePath = new google.maps.Polyline({
+        path: checkCordinates,
+        geodesic: true,
+        strokeColor: '#A9A9A9',
+        strokeOpacity: 2.0,
+        strokeWeight: 5
+      });
+      routePath.setMap(map);
+      map.fitBounds(bounds);
+    })
+    initialize();
+  </script>
+
+</body>
+
+</html>
